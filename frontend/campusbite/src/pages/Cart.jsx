@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 import BackButton from "../components/BackButton";
 import { CartContext } from "../context/CartContext";
@@ -17,6 +17,7 @@ function Cart() {
   } = useContext(CartContext);
 
   const { showToast } = useContext(ToastContext);
+  const [paying, setPaying] = useState(false);
 
   const totalPrice = cart.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -29,12 +30,24 @@ function Cart() {
     if (!token) {
       if (showToast) {
         showToast({
-          message: "Please login to place an order",
+          message: "Please login to continue to payment",
           type: "error",
         });
       }
       return;
     }
+
+    if (!cart.length) {
+      if (showToast) {
+        showToast({
+          message: "Your cart is empty",
+          type: "error",
+        });
+      }
+      return;
+    }
+
+    setPaying(true);
 
     try {
       const orderData = {
@@ -48,24 +61,29 @@ function Cart() {
         totalPrice,
       };
 
-      await API.post("/orders", orderData);
+      const response = await API.post("/payments/initialize", orderData);
+
+      if (response.data?.authorization_url) {
+        window.location.href = response.data.authorization_url;
+        return;
+      }
 
       if (showToast) {
         showToast({
-          message: "Order placed successfully!",
-          type: "success",
+          message: "Payment could not be started. Please try again.",
+          type: "error",
         });
       }
-
-      clearCart();
     } catch (error) {
       console.log(error);
       if (showToast) {
         showToast({
-          message: error.response?.data?.message || "Order failed",
+          message: error.response?.data?.message || "Payment initialization failed",
           type: "error",
         });
       }
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -111,6 +129,7 @@ function Cart() {
             cart={cart}
             totalPrice={totalPrice}
             placeOrder={placeOrder}
+            paying={paying}
           />
         </div>
       )}

@@ -14,25 +14,14 @@ const orderSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
         },
-        vendor: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
+
         name: String,
-        price: Number,
-        quantity: Number,
+
         image: String,
-        status: {
-          type: String,
-          enum: [
-            "pending",
-            "preparing",
-            "out-for-delivery",
-            "delivered",
-            "cancelled",
-          ],
-          default: "pending",
-        },
+
+        price: Number,
+
+        quantity: Number,
       },
     ],
 
@@ -46,21 +35,35 @@ const orderSchema = new mongoose.Schema(
       enum: [
         "pending",
         "preparing",
-        "out-for-delivery",
-        "delivered",
+        "ready",
+        "completed",
         "cancelled",
       ],
       default: "pending",
     },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid"],
+      default: "pending",
+    },
+
+    paymentMethod: {
+      type: String,
+      default: "Paystack",
+    },
+
+    paymentReference: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    paidAt: Date,
   },
   {
     timestamps: true,
   }
 );
 
-const Order = mongoose.model(
-  "Order",
-  orderSchema
-);
-
-export default Order;
+export default mongoose.model("Order", orderSchema);

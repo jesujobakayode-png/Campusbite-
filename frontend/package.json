@@ -5,6 +5,7 @@
     "preview": "npm --prefix campusbite run preview --"
   },
   "dependencies": {
+    "@paystack/inline-js": "^2.23.1",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
     "framer-motion": "^12.40.0",

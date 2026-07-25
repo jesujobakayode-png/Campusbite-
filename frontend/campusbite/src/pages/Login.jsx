@@ -113,15 +113,23 @@ function Login() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-gray-700">
-          Don&apos;t have an account?{" "}
+        <div className="mt-6 flex flex-col items-center gap-2 text-center text-gray-700">
           <Link
-            to="/register"
+            to="/forgot-password"
             className="font-semibold text-amber-600 hover:text-amber-500"
           >
-            Register
+            Forgot password?
           </Link>
-        </p>
+          <p>
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-amber-600 hover:text-amber-500"
+            >
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

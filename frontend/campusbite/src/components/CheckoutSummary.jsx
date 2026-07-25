@@ -2,6 +2,7 @@ function CheckoutSummary({
   cart,
   totalPrice,
   placeOrder,
+  paying,
 }) {
 
   const deliveryFee = totalPrice > 0 ? 500 : 0;
@@ -46,9 +47,10 @@ function CheckoutSummary({
 
       <button
         onClick={placeOrder}
-        className="mt-8 min-h-12 w-full rounded-xl border border-amber-500 bg-amber-500 py-3 text-base font-bold text-black transition hover:bg-amber-400 sm:py-4 sm:text-lg"
+        disabled={paying}
+        className="mt-8 min-h-12 w-full rounded-xl border border-amber-500 bg-amber-500 py-3 text-base font-bold text-black transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-70 sm:py-4 sm:text-lg"
       >
-        Place Order
+        {paying ? "Redirecting..." : `Pay ₦${finalTotal}`}
       </button>
 
     </div>

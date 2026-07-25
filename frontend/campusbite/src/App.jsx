@@ -20,6 +20,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import MyOrders from "./pages/MyOrders";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 
@@ -59,6 +62,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify/:token" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/vendor/orders" element={
             <ProtectedRoute
               user={user}
@@ -78,6 +83,7 @@ function App() {
           />
           <Route path="/vendors" element={<Vendors />} />
           <Route path="/vendor/:id" element={<VendorProfilePublic />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route
               path="/my-orders"
               element={

@@ -1,6 +1,12 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import User from "../models/User.js";
 import { getIo } from "../utils/socket.js";
+import {
+  sendNewOrderAlertEmail,
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+} from "../services/emailService.js";
 
 const orderStatuses = [
   "pending",
@@ -150,13 +156,25 @@ export const createOrder = async (
       })
     );
 
-    const createdOrder = await Order.create({
+    const order = await Order.create({
       user: req.user.id,
       items: enrichedItems,
       totalPrice,
     });
 
-    const order = await Order.findById(createdOrder._id)
+    const user = await User.findById(req.user.id);
+
+    try {
+      await sendOrderConfirmationEmail(
+        user?.email,
+        user?.name,
+        order
+      );
+    } catch (emailError) {
+      console.error("Order confirmation email failed", emailError?.message || emailError);
+    }
+
+    const populatedOrder = await Order.findById(order._id)
       .populate("user", "name email")
       .populate("items.vendor", "name email")
       .populate({
@@ -169,7 +187,7 @@ export const createOrder = async (
     const io = getIo();
 
     // notify buyer
-    io?.to(`user_${req.user.id}`).emit("orderCreated", shapeOrderForBuyer(order));
+    io?.to(`user_${req.user.id}`).emit("orderCreated", shapeOrderForBuyer(populatedOrder));
 
     // notify vendors involved
     const vendorIds = Array.from(
@@ -177,10 +195,29 @@ export const createOrder = async (
     );
 
     vendorIds.forEach((vid) => {
-      io?.to(`vendor_${vid}`).emit("newOrder", shapeOrderForVendor(order, vid));
+      io?.to(`vendor_${vid}`).emit("newOrder", shapeOrderForVendor(populatedOrder, vid));
     });
 
-    res.status(201).json(shapeOrderForBuyer(order));
+    await Promise.all(
+      vendorIds.map(async (vid) => {
+        try {
+          const vendor = await User.findById(vid);
+
+          if (vendor?.email) {
+            await sendNewOrderAlertEmail(
+              vendor.email,
+              vendor.name || vendor.brandName || "Vendor",
+              populatedOrder,
+              vendor.name || vendor.brandName || "Vendor"
+            );
+          }
+        } catch (emailError) {
+          console.error("New order alert email failed", emailError?.message || emailError);
+        }
+      })
+    );
+
+    res.status(201).json(shapeOrderForBuyer(populatedOrder));
 
   } catch (error) {
 
@@ -314,6 +351,17 @@ export const updateOrderStatus =
         });
 
       const vendorOrder = shapeOrderForVendor(updatedOrder, req.user.id);
+
+      try {
+        await sendOrderStatusUpdateEmail(
+          updatedOrder.user?.email,
+          updatedOrder.user?.name,
+          updatedOrder,
+          requestedStatus
+        );
+      } catch (emailError) {
+        console.error("Order status email failed", emailError?.message || emailError);
+      }
 
       // emit updates to buyer and vendors
       const io = getIo();
